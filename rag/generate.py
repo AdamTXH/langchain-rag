@@ -5,9 +5,10 @@ from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain.llms import LlamaCpp
 import os
 
-# Get the llm chat model from Azure
+# Create an llm chat model with Azure API
 def get_llm_azure(deployment_name, max_tokens=2048, temperature=0.7):
     return AzureChatOpenAI(
         openai_api_version=os.environ["OPENAI_API_VERSION"],
@@ -16,7 +17,17 @@ def get_llm_azure(deployment_name, max_tokens=2048, temperature=0.7):
         temperature=temperature
     )
 
-# def get_llm_hf()
+# Create a llamacpp model
+def get_llm_llamacpp(model_path, n_gpu_layers=999, temperature=0, max_tokens=2048, top_p=1, verbose=False, n_ctx=2048):
+    return LlamaCpp(
+        model_path=model_path,
+        n_gpu_layers=n_gpu_layers,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        top_p=top_p,
+        verbose=verbose,
+        n_ctx=n_ctx
+    )
 
 # Create prompt template
 def get_prompt_template(template=None):
