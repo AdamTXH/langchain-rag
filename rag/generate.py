@@ -61,9 +61,14 @@ def create_rag_chain(retriever, custom_rag_prompt, llm):
     return rag_chain
 
 # Streaming the output to improve responsiveness
-async def stream_output(rag_chain, query):
+async def stream_output(rag_chain, query, trace=False, callback_handler=None):
     response = ""
-    async for text in rag_chain.astream(query):
-        print(text, end="", flush=True)
-        response += text 
+    if trace:
+        async for text in rag_chain.astream(query, config={"callbacks": [callback_handler]}):
+            print(text, end="", flush=True)
+            response += text 
+    else:
+        async for text in rag_chain.astream(query):
+            print(text, end="", flush=True)
+            response += text 
     return response
