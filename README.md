@@ -9,6 +9,20 @@ volume=/data/llm/hf-tei-data
 docker run --gpus all --env HTTPS_PROXY=$https_proxy --env HTTP_PROXY=$http_proxy -p 8180:80 -v $volume:/data --pull always ghcr.io/huggingface/text-embeddings-inference:turing-0.6 --model-id $model
 ```
 
+# Run RAG Chatbot pipeline
+Run chatbot:
+```bash
+python main.py -D "database/chromadb/flex_neo"
+```
+- -D, --database_path <path_to_database> (Required)
+
+With ingestion:
+```bash
+python main.py -D "database/chromadb/flex_neo" -i -d "/home/adamtay/computex/documents/2024 Intel Flex Engineering Malaysia - NEO_20240228.pdf"
+```
+- -i, --ingest
+- -d, --document_path <path_to_document>
+
 # Langfuse metrics dashboard
 [Langfuse](https://github.com/langfuse/langfuse) is an open-source LLM engineering platform that helps teams collaboratively debug, analyze, and iterate on their LLM applications.
 
