@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Confidential
+documents/
+notebooks/rag_copy.ipynb
+
 # Distribution / packaging
 .Python
 build/
