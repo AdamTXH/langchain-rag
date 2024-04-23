@@ -5,7 +5,7 @@ from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-from langchain.llms import LlamaCpp
+from langchain_community.llms import LlamaCpp
 import os
 
 # Create an llm chat model with Azure API
@@ -14,7 +14,8 @@ def get_llm_azure(deployment_name, max_tokens=2048, temperature=0.7):
         openai_api_version=os.environ["OPENAI_API_VERSION"],
         azure_deployment=deployment_name,
         max_tokens=max_tokens,
-        temperature=temperature
+        temperature=temperature,
+
     )
 
 # Create a llamacpp model
@@ -58,3 +59,11 @@ def create_rag_chain(retriever, custom_rag_prompt, llm):
     | StrOutputParser()
     )
     return rag_chain
+
+# Streaming the output to improve responsiveness
+async def stream_output(rag_chain, query):
+    response = ""
+    async for text in rag_chain.astream(query):
+        print(text, end="", flush=True)
+        response += text 
+    return response
