@@ -4,14 +4,46 @@ from rag.retrieve import *
 import argparse
 import time
 import asyncio
+
+import langfuse
 from langfuse.callback import CallbackHandler
-langfuse_handler = CallbackHandler(
+
+import time
+
+class MyCallbackHandler(CallbackHandler):
+    def on_llm_end(
+        self,
+        response,
+        *,
+        run_id,
+        **kwargs,
+    ):
+        '''
+        Modified to add support for first token latency and token counts
+        '''
+        # print(response)
+        # response.llm_output = {
+        # "usage":{
+        #     "input_tokens": 100,
+        #      "output_tokens": 1000
+        # }
+        #  }
+                
+        self.runs[run_id].update(completion_start_time=response.llm_output.pop("completion"))
+
+        super().on_llm_end(
+            response,
+            run_id=run_id,
+            **kwargs
+        )
+        
+langfuse_handler = MyCallbackHandler(
     secret_key="sk-lf-e6e2901e-7de3-4f17-8931-3960ccc2712e",
     public_key="pk-lf-6405031c-d29e-4103-b2d3-955ee758c9db",
     host="http://localhost:3000"
 )
 
-async def main(options):
+def main(options):
     if "database_path" not in options:
         raise ValueError("Database path is required.")
 
@@ -31,14 +63,18 @@ async def main(options):
         save_chunks_to_chroma(chunks, embedding_model, args.database_path)
         print("...Ingestion Completed")
     # Retriever
-    retriever = get_chroma_retriever(args.database_path, embedding_model, k=0)
+    retriever = get_chroma_retriever(args.database_path, embedding_model, k=1)
 
     # Rag Chain
     # Using mistral on llamacpp for now
     #llm = get_llm_llamacpp("/data/llm/models/mistral-7b-instruct-v0.2.FP16.gguf")
     llm = get_llm_ipex()
     #llm = get_llm_hf()
-    prompt_template = get_prompt_template("answer succintly") # Use the default template
+    prompt_template = get_prompt_template(
+        # """
+        # {question}
+        # """
+    )
     rag_chain = create_rag_chain(retriever, prompt_template, llm)
 
     # Run interaction
@@ -50,9 +86,10 @@ async def main(options):
             user_query = input("You: ")
             t1 = time.time()
             print("AI: ", end='', flush=True)
-            response = await stream_output(rag_chain, user_query, trace = options["trace"], callback_handler=langfuse_handler)
+            response = stream_output(rag_chain, user_query, trace = options["trace"], callback_handler=langfuse_handler)
             t2 = time.time() - t1
             print(f"Took {t2*1000:.4f} ms.")
+
     except KeyboardInterrupt:
         print("\nExiting...")
 
@@ -73,7 +110,7 @@ if __name__ == "__main__":
     # Store options in a dictionary
     options = {k: v for k, v in vars(args).items() if v is not None}
 
-    asyncio.run(main(options))
+    main(options)
 
 # docker run -d --name my_postgres -v my_dbdata:/home/adamtay/computex/database/postgresql/data -p 5432:5432 -e POSTGRES_PASSWORD=my_password postgres:15-alpine
 # docker exec -it my_postgres psql -U postgres
