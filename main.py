@@ -5,20 +5,19 @@ import argparse
 import time
 import asyncio
 from langfuse.callback import CallbackHandler
-from dotenv import load_dotenv
-
-# Load env variables
-load_dotenv()
-
-# Initialize Langfuse handler (LANGFUSE_HOST, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY are all in .env)
-langfuse_handler = CallbackHandler()
+langfuse_handler = CallbackHandler(
+    secret_key="sk-lf-e6e2901e-7de3-4f17-8931-3960ccc2712e",
+    public_key="pk-lf-6405031c-d29e-4103-b2d3-955ee758c9db",
+    host="http://localhost:3000"
+)
 
 async def main(options):
     if "database_path" not in options:
         raise ValueError("Database path is required.")
 
     # Embedding model
-    embedding_model = get_embedding_model("http://localhost:8188")
+    #embedding_model = get_embedding_model("http://localhost:8188")
+    embedding_model = get_hf_embedding_model()
     # Ingest
     if options["ingest"] == True:
         if "document_filepath" not in options:
@@ -36,8 +35,10 @@ async def main(options):
 
     # Rag Chain
     # Using mistral on llamacpp for now
-    llm = get_llm_llamacpp("/data/llm/models/mistral-7b-instruct-v0.2.FP16.gguf")
-    prompt_template = get_prompt_template() # Use the default template
+    #llm = get_llm_llamacpp("/data/llm/models/mistral-7b-instruct-v0.2.FP16.gguf")
+    llm = get_llm_ipex()
+    #llm = get_llm_hf()
+    prompt_template = get_prompt_template("answer succintly") # Use the default template
     rag_chain = create_rag_chain(retriever, prompt_template, llm)
 
     # Run interaction

@@ -1,6 +1,7 @@
 from rag.utils import benchmark
 
 from langchain_community.embeddings import HuggingFaceHubEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -9,6 +10,9 @@ import os
 # Returns a hugging face embedding model
 def get_embedding_model(model_endpoint: str):
     return HuggingFaceHubEmbeddings(model=model_endpoint)
+
+def get_hf_embedding_model():
+    return HuggingFaceEmbeddings(model_name="thenlper/gte-large")
 
 # Load PDF documents from file path
 @benchmark

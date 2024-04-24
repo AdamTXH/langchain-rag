@@ -6,7 +6,19 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.llms import LlamaCpp
+from ipex_llm.langchain.llms import TransformersLLM
 import os
+
+from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+def get_llm_hf():
+    model_id = "microsoft/phi-2"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id)
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=2048)
+    hf = HuggingFacePipeline(pipeline=pipe)
+    return hf
 
 # Create an llm chat model with Azure API
 def get_llm_azure(deployment_name, max_tokens=2048, temperature=0.7):
@@ -29,6 +41,13 @@ def get_llm_llamacpp(model_path, n_gpu_layers=999, temperature=0, max_tokens=204
         verbose=verbose,
         n_ctx=n_ctx
     )
+
+def get_llm_ipex():
+    return  TransformersLLM.from_model_id(
+            model_id="mistralai/Mistral-7B-Instruct-v0.2",
+            model_kwargs={"temperature": 0, "max_length": 4096, "trust_remote_code": True},
+            device_map='xpu'
+        )
 
 # Create prompt template
 def get_prompt_template(template=None):
